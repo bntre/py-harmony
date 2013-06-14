@@ -9,10 +9,15 @@ class defaultlist(list):
     def __setitem__(self, index, value):
         while len(self) <= index: self.append(self.default)
         list.__setitem__(self, index, value)
-
-
+        while self and self[-1] == self.default: del self[-1]  # minimize
+    def clear(self):
+        self[:] = []
 
 # math
+
+def mult(xs):
+    import operator
+    return reduce(operator.mul, xs, 1)
 
 def primes(): # http://code.activestate.com/recipes/117119/
     D = {}
@@ -28,6 +33,7 @@ def primes(): # http://code.activestate.com/recipes/117119/
         q += 1
 
 def factor(a):
+    if a <= 0: return
     for p in primes():
         while True:
             if a == 1: return
@@ -41,5 +47,35 @@ def powers(a):
         yield factors.count(p)
         factors = filter(lambda a: a != p, factors)
         if len(factors) == 0: break
+    
+# combinatorics
+
+def variations(n, p= 2):  # default 2 means {0, 1}
+    # find a better function name !!!
+    """ variations(3, 2) ->
+    (0, 0, 0)
+    (0, 0, 1)
+    (0, 1, 0)
+    (0, 1, 1)
+    (1, 0, 0)
+    (1, 0, 1)
+    (1, 1, 0)
+    (1, 1, 1)
+    """
+    if n == 0:
+        yield ()
+    else:
+        for v in variations(n-1, p):
+            for i in range(p):
+                yield v + (i,)
+         
+
+def test():
+    for v in variations(3): print v
+    
+
+if __name__ == "__main__":
+    test()
+    
     
 
