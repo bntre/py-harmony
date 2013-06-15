@@ -19,6 +19,11 @@ def mult(xs):
     import operator
     return reduce(operator.mul, xs, 1)
 
+def integers(start= 0):
+    while True:
+        yield start
+        start += 1
+
 def primes(): # http://code.activestate.com/recipes/117119/
     D = {}
     q = 2
@@ -48,27 +53,29 @@ def powers(a):
         factors = filter(lambda a: a != p, factors)
         if len(factors) == 0: break
     
+
+
 # combinatorics
 
-def variations(n, p= 2):  # default 2 means {0, 1}
+def variations(n, p= 2):
     # find a better function name !!!
-    """ variations(3, 2) ->
-    (0, 0, 0)
-    (0, 0, 1)
-    (0, 1, 0)
-    (0, 1, 1)
-    (1, 0, 0)
-    (1, 0, 1)
-    (1, 1, 0)
-    (1, 1, 1)
-    """
+    "(3, 2) -> (0, 0, 0), (0, 0, 1),.. (1, 1, 1)"
     if n == 0:
         yield ()
     else:
         for v in variations(n-1, p):
             for i in range(p):
                 yield v + (i,)
-         
+
+
+def combinations(items, size):
+    if size == 0:
+        yield ()
+    else:
+        for i,item in enumerate(items):
+            for c in combinations( items[i+1:], size-1 ):
+                yield (item,) + c
+
 
 def test():
     for v in variations(3): print v
