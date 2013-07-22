@@ -19,12 +19,13 @@ class Spectrum(defaultdict):
     def getFundamentals(self):
         result = Spectrum()
         keys = sorted(self.keys(), key= float)  # might be not sorted
-        variations = list(utils.variations(len(keys)))[1:]  # skip (0,0,..)
-        for v in variations:
+        variations = list(utils.variations(len(keys)))[1:]
+        for v in variations:  # (0,0,1), (0,1,0), (0,1,1),.. (1,1,1)   
             ks = [k for (b,k) in zip(v, keys) if b]
-            #value = utils.mult( self[k] for k in ks )
-            value = utils.mult( self[k] for k in ks ) ** (1.0/len(ks))  # geometric mean
-            result[ Rational.gcd(*ks) ] += value
+            d = Rational.gcd(*ks)
+            value = utils.mult( self[k] for k in ks )
+            value **= 1.0/len(ks)  # geometric mean
+            result[ d ] += value
         return result
 
     def printTable(self):
@@ -51,13 +52,17 @@ def drawFundamentals(*args, **kw):
     s = Spectrum(*args, **kw)
     f = s.getFundamentals()
     f.draw(s)
+    print
 
 
 def test():
-    #drawFundamentals("1/1", "5/4", "3/2", weights= (0.8, 0.8, 0.8))
-    #drawFundamentals("1/1", "6/5", "3/2", weights= (0.8, 0.1, 0.8))
+    drawFundamentals("1/1", "5/4", "3/2")
+    #drawFundamentals(10, 12, 15, weights= (1.0, 1.0, 1.0))
+    #drawFundamentals("1/1", "6/5", "3/2", weights= (1.0, 1.0, 1.0))
     #drawFundamentals("1/1", "5/4", "3/2", "9/5")
-    drawFundamentals("1/1", "5/4", "3/2", "9/5", weights= (1.0, 1.0, 1.0, 0.2))
+    #drawFundamentals("1/1", "5/4", "3/2", "9/5", weights= (1.0, 1.0, 1.0, 0.2))
+    drawFundamentals("1/1", "6/5", "3/2", "9/5", weights= (1.0, 1.0, 1.0, 0.2))
+    #drawFundamentals("1/1", "2/1")
 
 
 if __name__ == "__main__":
