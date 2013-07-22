@@ -13,6 +13,11 @@ class defaultlist(list):
     def clear(self):
         self[:] = []
 
+def take(count, iters):
+    for (i,x) in enumerate(iters):
+        if i == count: break
+        yield x
+
 # math
 
 def mult(xs):
@@ -36,6 +41,14 @@ def primes(): # http://code.activestate.com/recipes/117119/
                 D.setdefault(p + q, []).append(p)
             del D[q]
         q += 1
+
+def gcd(a, b):
+    while b:
+        a, b = b, a%b
+    return a
+
+def lcm(a, b):
+    return a * b // gcd(a, b)
 
 def factor(a):
     if a <= 0: return

@@ -21,22 +21,54 @@ def generateChords(noteRange= (3, 4), maxWidth= 1.999):
                     yield chord
 
 
-def test():
+
+def getHarmonicDistance(chord, weights= ()):
+    "chord as a list of integers, weights - floats"
     from rationals import Rational
-    for (i,c) in enumerate(generateChords()):
+    import harmonicity 
+    
+    #print chord, weights
+    if not weights: weights = (1.0,) * len(chord)
+    
+    variations = list( utils.variations(len(chord)) )
+    distance = 0.0
+    for var in variations:
+        ns = [ n for (n,b) in zip(chord, var) if b ]
+        ws = [ w for (w,b) in zip(weights, var) if b ]
+        if len(ns) >= 2:
+            m = reduce(utils.lcm, ns)
+            r = Rational(m)
+            d = harmonicity.simple(5)(r)
+            dw = d * utils.mult(ws)
+            #print "  ", ns, m, `r`, d #, dw
+            distance += dw
+    return distance
+
+
+
+def test_generate():
+    from rationals import Rational
+    chords = utils.take(1000, generateChords((3,3)));
+    chords = [(c, getHarmonicDistance(c)) for c in chords ]
+    chords.sort(key= lambda (c,d): d)
+    
+    for (i,(c,d)) in enumerate(chords[:50]):
         chord = map(Rational, c)
         for j in range(len(chord))[::-1]: chord[j] /= chord[0]  # normalize
         # print
-        print i+1,
+        print "%03d." % (i+1), c,
         for r in chord:
             print r.getFraction(0),
             #print r.getSonant(),
-        print
-        if i+1 >= 1000: break
+        print d
     
+def test_distance():
+    print getHarmonicDistance([10, 12, 15], (1.0, 0.3, 1.0))
+
 
 if __name__ == "__main__":
-    test()
+    test_generate()
+    #test_distance()
 
 
 
