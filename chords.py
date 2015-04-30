@@ -34,13 +34,12 @@ def getHarmonicDistance(chord, weights= ()):
     distance = 0.0
     for var in variations:
         ns = [ n for (n,b) in zip(chord, var) if b ]
-        ws = [ w for (w,b) in zip(weights, var) if b ]
         if len(ns) >= 2:
-            m = reduce(utils.lcm, ns)
-            r = Rational(m)
-            d = harmonicity.simple(5)(r)
-            dw = d * utils.mult(ws)
-            #print "  ", ns, m, `r`, d #, dw
+            gcd = reduce(utils.gcd, ns)
+            ns = [ n/gcd for n in ns ] # reduce notes
+            d = sum([ harmonicity.simple(5)( Rational(n) ) for n in ns ])
+            dw = d * utils.mult([ w for (w,b) in zip(weights, var) if b ])
+            #print "  ", ns, lcm, `r`, d #, dw
             distance += dw
     return distance
 
@@ -63,7 +62,8 @@ def test_generate():
         print d
     
 def test_distance():
-    print getHarmonicDistance([10, 12, 15], (1.0, 0.3, 1.0))
+    #print getHarmonicDistance([10, 12, 15], (1.0, 0.3, 1.0))
+    print getHarmonicDistance([4, 5, 6])
 
 
 if __name__ == "__main__":

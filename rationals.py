@@ -50,7 +50,8 @@ class Rational(utils.defaultlist):
     def __div__(a, b):
         if not isinstance(b, Rational): return a / Rational(b)
         return Rational( p-q for (p,q) in Rational.zip(a, b) )
-        
+    def __pow__(a, i):
+        return Rational(map(lambda k: k*i, a))
 
     def setPowers(self, powers):
         self.clear()
@@ -80,6 +81,17 @@ class Rational(utils.defaultlist):
     def getCents(self):
         return math.log( float(self), 2 ) * 1200
     
+    def getZip(self):
+        return [ p for p in zip(utils.primes(), self) if p[1] != 0 ]
+    
+    def getEpimoricZip(self):
+        result = []
+        r = Rational(self)
+        while r != Rational(1):
+            p, i = zip(utils.primes(), r)[-1]
+            result.insert(0, (p, i))
+            r /= Rational(p, p-1) ** i
+        return result
     
     @staticmethod
     def zip(*rs):
@@ -89,8 +101,7 @@ class Rational(utils.defaultlist):
     @staticmethod
     def gcd(*rs):
         return Rational(map(min, Rational.zip(*rs)))
-            
-    
+
 
 def test():
     r = Rational('3/20')
@@ -103,6 +114,13 @@ def test():
     
     print Rational(3) / 10 * 4  #  6/5
 
+
+def test2():
+    r = Rational(77, 68)
+    print r.getZip()
+    print r.getEpimoricZip()
+
+
 if __name__ == "__main__":
-    test()
+    test2()
     
