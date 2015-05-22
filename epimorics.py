@@ -38,23 +38,22 @@ def formatPath(r, path):
         cur = cur*i1/i0
         grid[cur][j] = i1
     #
-    def pad(s, l):
-        return "%%%ds" % l % s
-    le = len(`max(grid.keys())`)
+    def pad(s, l): return "%%%ds" % l % s
+    le = max(2, len(`max(grid.keys())`))
     def header(i, cs):
-        ii = pad(i, le)
-        if i in (n,d): return "> %s " % ii
-        if cs[1] != 0: return "  %s " % ii
-        else:          return " [%s]" % ii
+        if i in (n,d): return ">%s" % pad(" %d " % i, le+2)
+        if cs[1] != 0: return " %s" % pad(" %d " % i, le+2)
+        else:          return " %s" % pad("[%d]" % i, le+2)
     def line(i, cs):
         for (j,c) in enumerate(cs):
             if   j == 0: continue
             elif j == 1: yield header(i, cs)
-            else:        yield pad(c or "", le+1)
+            else:        yield pad(c or "", 2)
     lines = []
     if 1:
         w = max(len(v) for v in grid.values())
-        def h(j): return (j == 1 and "  %s " or "%s") % pad("%d)" % j, le+1)
+        if w > 40: return None
+        def h(j): return (j == 1 and "  %s " or "%s") % pad(j, 2)
         lines.append("".join(h(j) for j in range(w)[1:]))
         lines.append("")
     for i in sorted(grid.keys())[::-1]:
@@ -64,14 +63,17 @@ def formatPath(r, path):
     
 
 def test():
-    r = Rational(21, 8)
+    #r = Rational(21, 8)
     #r = Rational(9, 5)
+    r = Rational(81, 80)
     print "getEpimoricZip", getEpimoricZip(r)
     for p in getEpimoricPaths(r):
         print "=" * 20
         print "path", p
-        print 
-        print formatPath(r, p)
+        f = formatPath(r, p)
+        if f:
+            print
+            print f
         
 
 
