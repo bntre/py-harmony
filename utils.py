@@ -1,4 +1,6 @@
 
+import itertools    # https://docs.python.org/2/library/itertools.html
+
 
 class defaultlist(list):
     def __init__(self, default= 0):
@@ -70,7 +72,10 @@ def powers(a):
 
 # combinatorics
 
-def variations(n, p= 2):
+# see also https://docs.python.org/2/library/itertools.html
+
+
+def variations(n, p):
     # find a better function name !!!
     "(3, 2) -> (0, 0, 0), (0, 0, 1),.. (1, 1, 1)"
     if n == 0:
@@ -82,6 +87,8 @@ def variations(n, p= 2):
 
 
 def combinations(items, size):
+    # same as itertools.combinations
+    # combinations('ABCD', 2) -> AB AC AD BC BD CD
     if size == 0:
         yield ()
     else:
@@ -90,9 +97,45 @@ def combinations(items, size):
                 yield (item,) + c
 
 
-def test():
-    for v in variations(3): print v
+def combinations_bits(n, k):
+    # (5, 2) -> [(1,1,0,0,0), (1,0,1,0,0),..
+    return (
+        tuple((i in c and 1 or 0) for i in range(n))
+            for c in combinations(range(n), k)
+    )
+
+
+def permutations_groups(groups):
+    # ["AAA","B","CC"] -> ["AAABCC", "AAACBC",..
     
+    def mix(g0, g1, bits):
+        # ("AAA", "BB", [0,0,1,0,1]) -> "AABAB"
+        r = []; i0 = 0; i1 = 0
+        for b in bits:
+            if b == 0:
+                r.append(g0[i0]); i0 += 1
+            else:
+                r.append(g1[i1]); i1 += 1
+        return tuple(r)
+        
+    def mix2(g0, g1):
+        # ("AAA", "BB") -> ["AAABB", "AABAB",..
+        return (mix(g0, g1, [1-b for b in bits]) for bits in combinations_bits(len(g0)+len(g1), len(g0)))
+
+    result = [()]
+    for g in groups:
+        result = [m  for r in result  for m in mix2(r, g)]
+    return result
+
+
+def test():
+    #for v in variations(3): print v
+
+    #for c in combinations_bits(5, 2):
+    #    print c
+    
+    for p in permutations_groups(["AAA","B","CC"]):
+        print p
 
 if __name__ == "__main__":
     test()

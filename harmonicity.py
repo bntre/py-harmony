@@ -17,6 +17,13 @@ def simple(k):
              for (p,a) in zip(utils.primes(), powers))
     return h
 
+def epimoric(k):
+    def h(powers):
+        z = Rational(powers).getEpimoricZip()
+        return sum( a**2 * p**k
+             for (p,a) in z)
+    return h
+
 
 #---------------------------------
 
@@ -90,13 +97,16 @@ class RangeSearcher(object):
         else: print
     
     def print_result(self):
+        maxdistance = max(r[1] for r in self.result)
         self.result.sort(key= lambda r: float(r[0]))
         for (r,h) in self.result:
-            print "%14.8f %-10s %s %6.3f" % (r.getCents(), r.getSonant(), r.getFraction(), h)
+            print "%14.8f %-10s %s %9.3f %s" % (r.getCents(), r.getSonant(), r.getFraction(), h, "#" * int(20 - 20*h/maxdistance))
         
 
 def test():
-    RangeSearcher((1, 2), 30, 19, simple(4.0)).search()
+    #RangeSearcher((1, 2), 30, 19, barlow).search()
+    #RangeSearcher((1, 2), 30, 19, simple(4.0)).search()
+    RangeSearcher((1, 2), 30, 19, epimoric(2.0)).search()
     
     #harmonic_distance = simple(5.0)
     #for i in range(1, 100):

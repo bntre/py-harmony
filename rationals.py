@@ -40,7 +40,7 @@ class Rational(utils.defaultlist):
     def __repr__(self):
         return "[%s]" % ",".join(`p` for p in self)
     def __str__(self):
-        return self.getFraction(3)
+        return self.formatFraction(3)
     
     #def __add__(a, b)
     #def __sub__(a, b)
@@ -71,27 +71,19 @@ class Rational(utils.defaultlist):
     def getSonant(self):
         return sonantometry.powersToSonant(self)
 
-    def getFraction(self, i= 3):
+    def getFraction(self):
         n = 1; d = 1
         for (p,a) in zip(utils.primes(), self):
             if   a > 0: n *= p**a
             elif a < 0: d *= p**(-a)
+        return (n, d)
+    
+    def formatFraction(self, i= 3):
+        n,d = self.getFraction()
         return ("%%%dd" % i % n) + "/" + ("%%-%dd" % i % d)  # Python 2.5 only?
     
     def getCents(self):
         return math.log( float(self), 2 ) * 1200
-    
-    def getZip(self):
-        return [ p for p in zip(utils.primes(), self) if p[1] != 0 ]
-    
-    def getEpimoricZip(self):
-        result = []
-        r = Rational(self)
-        while r != Rational(1):
-            p, i = zip(utils.primes(), r)[-1]
-            result.insert(0, (p, i))
-            r /= Rational(p, p-1) ** i
-        return result
     
     @staticmethod
     def zip(*rs):
@@ -117,8 +109,6 @@ def test():
 
 def test2():
     r = Rational(77, 68)
-    print r.getZip()
-    print r.getEpimoricZip()
 
 
 if __name__ == "__main__":
