@@ -21,13 +21,12 @@ class Rational(utils.defaultlist):
             else:
                 self.setFraction(arg, 1)
 
-    def __eq__(a, b):
-        return tuple(a) == tuple(b)
-    def __ne__(a, b):
-        return tuple(a) != tuple(b)
-    def __cmp__(a, b):
-        print "__cmp__"
-        return float.__cmp__(float(a), float(b))
+    def __eq__(a, b): return tuple(a) == tuple(b)
+    def __ne__(a, b): return tuple(a) != tuple(b)
+    def __lt__(a, b):
+        n,d = (a/b).getFraction()
+        return n < d
+
     def __hash__(self):
         return hash(tuple(self))
     def __float__(self):
@@ -40,7 +39,7 @@ class Rational(utils.defaultlist):
     def __repr__(self):
         return "[%s]" % ",".join(`p` for p in self)
     def __str__(self):
-        return self.formatFraction(3)
+        return self.formatFraction(1)
     
     #def __add__(a, b)
     #def __sub__(a, b)
@@ -59,6 +58,7 @@ class Rational(utils.defaultlist):
             self[i] = p
 
     def setFraction(self, n, d):
+        if n == 0 or d == 0: raise Exception("Invalid rational %d/%d" % (n,d))
         self.clear()
         for (i,p) in enumerate(utils.powers(n)):
             self[i] += p
@@ -79,8 +79,11 @@ class Rational(utils.defaultlist):
         return (n, d)
     
     def formatFraction(self, i= 3):
-        n,d = self.getFraction()
-        return ("%%%dd" % i % n) + "/" + ("%%-%dd" % i % d)  # Python 2.5 only?
+        n, d = self.getFraction()
+        result = "%%%dd" % i % n
+        if d != 1:
+            result += "/" + ("%%-%dd" % i % d)
+        return result
     
     def getCents(self):
         return math.log( float(self), 2 ) * 1200
