@@ -4,6 +4,7 @@ import itertools
 import utils
 from rationals import Rational
 
+
 def getEpimoricZip(r):
     "(6/5) -> [(3/2,1), (5/4,-1)]"
     result = []
@@ -14,26 +15,44 @@ def getEpimoricZip(r):
         r /= e ** i
     return result
 
-def getEpimoricPaths(r):                                # 9/5 ->
-    z = getEpimoricZip(r)                               # [    (3,2),       (5,-1)  ]
-    groups = [ [(e,k/abs(k))] * abs(k) for (e,k) in z]  # [ [(3,1),(3,1)], [(5,-1)] ]
-    for perm in utils.permutations_groups(groups):      # [(3,1),(3,1),(5,-1)], [(3,1),(5,-1),(3,1)],..
+
+def getEpimoricPaths(r):                                   # 9/5 ->
+    z = getEpimoricZip(r)                                  # [  (3/2,2) (5/4,-1) ]
+    groups = [ [e ** (k/abs(k))] * abs(k) for (e,k) in z]  # [ [3/2, 3/2], [4/5] ]
+    for perm in utils.permutations_groups(groups):         # [3/2, 3/2, 4/5], [3/2, 4/5, 3/2],..
         yield perm
 
 
-def formatPath(r0, r1, path):
+class Step(object):
+    def __init__(self, cur0, i0,i1, scala, cur1):
+        self.cur0 = cur0
+        self.i0 = i0
+        self.i1 = i1
+        self.scala = scala
+        self.cur1 = cur1
+        
+def getEpimoricSteps(r0,r1, path):
+    steps = []
+    cur = r0
+    for e in path:
+        i0,i1 = e.getFraction()
+        step = Step(cur, i0,i1, cur/i0, cur*i1/i0)
+        steps.append(step)
+        cur = step.cur1
+    if cur != r1: raise Exception("%s != %s", (cur, r1))
+    return steps
+
+
+def formatPath(r0,r1, path):
     from collections import defaultdict
     from utils       import defaultlist
     #
-    grid = defaultdict(defaultdict)
+    steps = getEpimoricSteps(r0,r1, path)
     #
-    cur = r0
-    for (e,s) in path:
-        i0,i1 = (e ** s).getFraction()
-        j = cur/i0
-        grid[cur][j] = i0
-        cur = cur*i1/i0
-        grid[cur][j] = i1
+    grid = defaultdict(defaultdict)
+    for s in steps:
+        grid[s.cur0][s.scala] = s.i0
+        grid[s.cur1][s.scala] = s.i1
     grid[r0][Rational(1)] = r0
     grid[r1][Rational(1)] = r1
     #for i in sorted(grid.keys()): print i, dict(grid[i])
