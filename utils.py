@@ -128,6 +128,34 @@ def permutations_groups(groups):
     return result
 
 
+# utils
+
+def findBestItems(items, getRate):
+    maxRate = None
+    result = []
+    for i in items:
+        rate = getRate(i)
+        if maxRate is None or rate > maxRate:
+            result = [i]
+            maxRate = rate
+        elif rate == maxRate:
+            result += [i]
+    return result
+
+# https://wiki.python.org/moin/PythonDecoratorLibrary#Memoize
+class memoized(object):
+    def __init__(self, func):
+        self.func = func
+        self.cache = {}
+    def __call__(self, *args):
+        if args in self.cache:
+            return self.cache[args]
+        else:
+            value = self.func(*args)
+            self.cache[args] = value
+            return value
+
+
 def test():
     #for v in variations(3): print v
 

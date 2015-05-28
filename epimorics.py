@@ -47,7 +47,7 @@ class Path(object):
     def getAllNotes(self):
         return (self.r0,) + tuple(s.note1 for s in self.steps)
     def getAllScalas(self):
-        return tuple(s.scala for s in self.steps)
+        return tuple(set(s.scala for s in self.steps))
 
 
 def getSteps(r0,r1, way):
@@ -112,6 +112,10 @@ class Chord(object):
         for p in self.paths:
             r += "\n  %s" % p
         return r
+    def getAllScalas(self):
+        scalas = [p.getAllScalas() for p in self.paths]
+        scalas = reduce(tuple.__add__, scalas)
+        return tuple(set(scalas))
 
 def generateAllChords(notes):
     notes = map(Rational, notes)                # 4,5,6
@@ -121,11 +125,15 @@ def generateAllChords(notes):
         yield Chord(notes, p)
 
 
-def getChordComplexity(chord):
-    #notes = [p.getAllNotes() for p in chord.paths]
-    #return len(set(reduce(tuple.__add__, notes)))
-    scalas = [p.getAllScalas() for p in chord.paths]
-    return len(set(reduce(tuple.__add__, scalas)))
+@utils.memoized
+def findBestChords(notes):
+    chords = generateAllChords(notes)
+    # 
+    getRate = lambda c: -len(c.getAllScalas())
+    bestChords = utils.findBestItems(chords, getRate)
+    #
+    return bestChords
+
 
 
 
@@ -144,20 +152,15 @@ def test():
             print
             print f
 
-def test2():
-    print Rational.gcd(Rational(3,2), Rational(6,2))
-
 def test3():
     from chords import generateChords
     allNotes = utils.take(20, generateChords())
     for notes in allNotes:
         print "="*30, notes
-        chords = generateAllChords(notes)
-        chords = [(c, getChordComplexity(c)) for c in chords]
-        compl = min(p[1] for p in chords)
-        best = [p for p in chords if p[1] == compl]
-        for (c,k) in best:
-            print "compl", k, c
+        chords = findBestChords(notes)
+        for c in chords:
+            print "scalas", sorted(c.getAllScalas())
+            print c
 
 
 if __name__ == "__main__":
