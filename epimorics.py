@@ -5,6 +5,7 @@ import utils
 from rationals import Rational
 
 
+
 def getEpimoricZip(r):
     "(6/5) -> [(3/2,1), (5/4,-1)]"
     result = []
@@ -16,45 +17,64 @@ def getEpimoricZip(r):
     return result
 
 
-def getEpimoricPaths(r):                                   # 9/5 ->
+def getEpimoricWays(r):                                    # 9/5 ->
     z = getEpimoricZip(r)                                  # [  (3/2,2) (5/4,-1) ]
     groups = [ [e ** (k/abs(k))] * abs(k) for (e,k) in z]  # [ [3/2, 3/2], [4/5] ]
     for perm in utils.permutations_groups(groups):         # [3/2, 3/2, 4/5], [3/2, 4/5, 3/2],..
         yield perm
 
 
+
+
 class Step(object):
-    def __init__(self, cur0, i0,i1, scala, cur1):
-        self.cur0 = cur0
-        self.i0 = i0
-        self.i1 = i1
-        self.scala = scala
-        self.cur1 = cur1
-        
-def getEpimoricSteps(r0,r1, path):
+    def __init__(self, scala, note0, i0,i1, note1):
+        self.scala = scala  # R
+        self.note0 = note0  # R
+        self.i0 = i0        # N
+        self.i1 = i1        # N
+        self.note1 = note1  # R
+    def __str__(s):
+        return "scala %s: %d (%s) -> %d (%s)" % (s.scala, s.i0, s.note0, s.i1, s.note1)
+
+class Path(object):
+    def __init__(self, r0,r1, way):
+        self.r0 = r0
+        self.r1 = r1
+        self.way = way
+        self.steps = getSteps(r0,r1, way)
+    def __str__(self):
+        return "path %s -> %s: %s" % (self.r0, self.r1, self.way)
+    def getAllNotes(self):
+        return (self.r0,) + tuple(s.note1 for s in self.steps)
+    def getAllScalas(self):
+        return tuple(s.scala for s in self.steps)
+
+
+def getSteps(r0,r1, way):
     steps = []
     cur = r0
-    for e in path:
+    for e in way:
         i0,i1 = e.getFraction()
-        step = Step(cur, i0,i1, cur/i0, cur*i1/i0)
+        step = Step(cur/i0, cur, i0,i1, cur*i1/i0)
         steps.append(step)
-        cur = step.cur1
+        cur = step.note1
     if cur != r1: raise Exception("%s != %s", (cur, r1))
     return steps
 
 
-def formatPath(r0,r1, path):
+def getPaths(r0,r1):
+    return [Path(r0,r1, way) for way in getEpimoricWays(r0/r1)]
+
+
+def formatPath(path):
     from collections import defaultdict
-    from utils       import defaultlist
-    #
-    steps = getEpimoricSteps(r0,r1, path)
     #
     grid = defaultdict(defaultdict)
-    for s in steps:
-        grid[s.cur0][s.scala] = s.i0
-        grid[s.cur1][s.scala] = s.i1
-    grid[r0][Rational(1)] = r0
-    grid[r1][Rational(1)] = r1
+    for s in path.steps:
+        grid[s.note0][s.scala] = s.i0
+        grid[s.note1][s.scala] = s.i1
+    #grid[r0][Rational(1)] = r0
+    #grid[r1][Rational(1)] = r1
     #for i in sorted(grid.keys()): print i, dict(grid[i])
     
     # scalas
@@ -74,7 +94,7 @@ def formatPath(r0,r1, path):
             if r is not None: return str(r)
             if j == gcd: return "[%s]" % str(i/gcd)
             return ""
-        h = i in (r0,r1) and ">" or ""  # row header
+        h = i in (path.r0, path.r1) and ">" or ""  # row header
         table.append([h] + [cell(j) for j in columns])
     #for row in table: print row
 
@@ -83,19 +103,43 @@ def formatPath(r0,r1, path):
     return "\n".join(" ".join(s.center(widths[j]) for (j,s) in enumerate(row)) for row in table)
 
 
+class Chord(object):
+    def __init__(self, notes, paths):
+        self.notes = notes
+        self.paths = paths
+    def __str__(self):
+        r = "chord " + `self.notes`
+        for p in self.paths:
+            r += "\n  %s" % p
+        return r
+
+def generateAllChords(notes):
+    notes = map(Rational, notes)                # 4,5,6
+    pairs = itertools.combinations(notes, 2)    # (4,5), (4,6), (5,6)
+    paths = [getPaths(*p) for p in pairs]       # paths of (4,5), paths of (4,6), paths of (5,6)
+    for p in itertools.product(*paths):         # all interpretations
+        yield Chord(notes, p)
+
+
+def getChordComplexity(chord):
+    #notes = [p.getAllNotes() for p in chord.paths]
+    #return len(set(reduce(tuple.__add__, notes)))
+    scalas = [p.getAllScalas() for p in chord.paths]
+    return len(set(reduce(tuple.__add__, scalas)))
+
+
+
 def test():
-    Rational.__repr__ = Rational.__str__
     #r = Rational(21, 8)
     #r = Rational(9, 5)
     #r = Rational(81, 80)
     r0 = Rational(9)
     r1 = Rational(5)
-    r = r0/r1
-    print r0, "->", r1, "zip:", getEpimoricZip(r)
-    for p in getEpimoricPaths(r):
+    for path in getPaths(r0,r1):
         print "=" * 30
-        print r0, "->", r1, "path", p
-        f = formatPath(r0, r1, p)
+        print path.r0, "->", path.r1, "way", path.way
+        for s in path.steps: print str(s)
+        f = formatPath(path)
         if f:
             print
             print f
@@ -103,5 +147,19 @@ def test():
 def test2():
     print Rational.gcd(Rational(3,2), Rational(6,2))
 
+def test3():
+    from chords import generateChords
+    allNotes = utils.take(20, generateChords())
+    for notes in allNotes:
+        print "="*30, notes
+        chords = generateAllChords(notes)
+        chords = [(c, getChordComplexity(c)) for c in chords]
+        compl = min(p[1] for p in chords)
+        best = [p for p in chords if p[1] == compl]
+        for (c,k) in best:
+            print "compl", k, c
+
+
 if __name__ == "__main__":
-    test()
+    Rational.__repr__ = Rational.__str__
+    test3()
