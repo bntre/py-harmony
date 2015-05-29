@@ -107,34 +107,70 @@ class Chord(object):
     def __init__(self, notes, paths):
         self.notes = notes
         self.paths = paths
+        # !!! make them lazy
+        #self.gcd = Rational.gcd(self.notes)
+        self.scalas = tuple(sorted(self.getAllScalas()))
     def __str__(self):
-        r = "chord " + `self.notes`
+        r = "chord %s scalas %s" % (self.notes, self.scalas)
         for p in self.paths:
             r += "\n  %s" % p
         return r
     def getAllScalas(self):
-        scalas = [p.getAllScalas() for p in self.paths]
-        scalas = reduce(tuple.__add__, scalas)
-        return tuple(set(scalas))
+        return tuple(set(
+            s  for p in self.paths  for s in p.getAllScalas()
+        ))
+    def getAllNotes(self):
+        return tuple(set(
+            n  for p in self.paths  for n in p.getAllNotes()
+        ))
+    def isGcdBased(self):
+        gcd = Rational.gcd(*self.notes)
+        return all((s/gcd).isInteger() for s in self.scalas)
+    def getRate(self):
+        return (
+            len(self.scalas),
+            len(self.getAllNotes())
+        )
+    def getBestChains(self):
+        if len(self.scalas) == 1:
+            return [[self]]
+        childChains = findBestChains(self.scalas)
+        return [[self]+c for c in childChains]
 
 def generateAllChords(notes):
     notes = map(Rational, notes)                # 4,5,6
     pairs = itertools.combinations(notes, 2)    # (4,5), (4,6), (5,6)
     paths = [getPaths(*p) for p in pairs]       # paths of (4,5), paths of (4,6), paths of (5,6)
-    for p in itertools.product(*paths):         # all interpretations
-        yield Chord(notes, p)
-
+    for ps in itertools.product(*paths):         # all interpretations
+        yield Chord(notes, ps)
 
 @utils.memoized
-def findBestChords(notes):
+def findBestChains(notes):
+    #print "findBestChains", notes
     chords = generateAllChords(notes)
-    # 
-    getRate = lambda c: -len(c.getAllScalas())
-    bestChords = utils.findBestItems(chords, getRate)
-    #
-    return bestChords
+    
+    # filter by gcd
+    chords = itertools.ifilter(lambda c: c.isGcdBased(), chords)
+    
+    # filter by rate
+    chords = utils.findBestItems(chords, lambda c: c.getRate())
+    
+    # build chains
+    chains = [chain   for chord in chords   for chain in chord.getBestChains()]
+    
+    # filter chains by size
+    if len(chains) > 1:
+        chains = utils.findBestItems(chains, lambda chain: len(chain))
 
+    # filter chains by chord rate
+    if len(chains) > 1:
+        chains = utils.findBestItems(chains, lambda chain: tuple(chord.getRate() for chord in chain))
 
+    # filter chains by all scales
+    if len(chains) > 1:
+        chains = utils.findBestItems(chains, lambda chain: len(set(s   for chord in chain   for s in chord.scalas)))
+
+    return chains
 
 
 def test():
@@ -154,13 +190,14 @@ def test():
 
 def test3():
     from chords import generateChords
-    allNotes = utils.take(20, generateChords())
+    allNotes = utils.take(50, generateChords())
     for notes in allNotes:
         print "="*30, notes
-        chords = findBestChords(notes)
-        for c in chords:
-            print "scalas", sorted(c.getAllScalas())
-            print c
+        chains = findBestChains(notes)
+        for chain in chains:
+            for c in chain:
+                print c
+            print
 
 
 if __name__ == "__main__":

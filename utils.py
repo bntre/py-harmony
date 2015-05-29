@@ -131,11 +131,12 @@ def permutations_groups(groups):
 # utils
 
 def findBestItems(items, getRate):
+    "small rate is better"
     maxRate = None
     result = []
     for i in items:
         rate = getRate(i)
-        if maxRate is None or rate > maxRate:
+        if maxRate is None or rate < maxRate:
             result = [i]
             maxRate = rate
         elif rate == maxRate:

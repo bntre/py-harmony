@@ -88,6 +88,9 @@ class Rational(utils.defaultlist):
     def getCents(self):
         return math.log( float(self), 2 ) * 1200
     
+    def isInteger(self):
+        return all(p >= 0 for p in self)
+    
     @staticmethod
     def zip(*rs):
         for i in range(max(map(len, rs))):
