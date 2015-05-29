@@ -156,6 +156,16 @@ class memoized(object):
             self.cache[args] = value
             return value
 
+def distinct(items, key= None): # !!! support key=
+    s = set()
+    r = []
+    for i in items:
+        k = key(i) if key else i
+        if k not in s:
+            s.add(k)
+            r.append(i)
+    return r
+
 
 def test():
     #for v in variations(3): print v
