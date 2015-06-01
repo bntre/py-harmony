@@ -1,0 +1,1 @@
+cloned from https://bitbucket.org/mozman/svgwrite
