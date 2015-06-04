@@ -56,7 +56,7 @@ def getSteps(n0,n1, way):
     cur = n0
     for e in way:
         i0,i1 = e.getFraction()
-        if cur/i0*i0 != cur: return None  # invalid way
+        if cur%i0 != 0: return None  # invalid way
         step = Step(cur/i0, cur, i0,i1, cur*i1/i0)
         steps.append(step)
         cur = step.note1

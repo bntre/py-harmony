@@ -1,96 +1,104 @@
 
+import itertools
+import math    
+import colorsys
+from collections import defaultdict
+
 import svgwrite
 from svgwrite import cm, mm
 
-
-def basic_shapes(name):
-    dwg = svgwrite.Drawing(filename=name, debug=True)
-    
-    hlines = dwg.add(dwg.g(id='hlines', stroke='green'))
-    for y in range(20):
-        hlines.add(dwg.line(start=(2*cm, (2+y)*cm), end=(18*cm, (2+y)*cm)))
-    
-    vlines = dwg.add(dwg.g(id='vline', stroke='blue'))
-    for x in range(17):
-        vlines.add(dwg.line(start=((2+x)*cm, 2*cm), end=((2+x)*cm, 21*cm)))
-        
-    shapes = dwg.add(dwg.g(id='shapes', fill='red'))
-
-    # set presentation attributes at object creation as SVG-Attributes
-    shapes.add(dwg.circle(center=(15*cm, 8*cm), r='2.5cm', stroke='blue',
-                          stroke_width=3))
-
-    # override the 'fill' attribute of the parent group 'shapes'
-    shapes.add(dwg.rect(insert=(5*cm, 5*cm), size=(45*mm, 45*mm),
-                        fill='blue', stroke='red', stroke_width=3))
-
-    # or set presentation attributes by helper functions of the Presentation-Mixin
-    ellipse = shapes.add(dwg.ellipse(center=(10*cm, 15*cm), r=('5cm', '10mm')))
-    ellipse.fill('green', opacity=0.5).stroke('black', width=5).dasharray([20, 20])
-    
-    dwg.save()
+from utils import defaultlist, primes, factor
 
 
-def draw_test(name):
+def getAllDivisors(n):
+    for i in range(1,n+1):
+        if n%i == 0:
+            yield i
 
-    dwg = svgwrite.Drawing(filename=name, debug=True, viewBox=('0 0 10 10'))
-    
-    group = dwg.add(dwg.g(id='group1'))
-    for i in range(10):
-        group.add(dwg.line(
-            start=(2+i*3, 2), 
-            end=  (2+i*3, 5), 
-            stroke= "#808000",
-            stroke_width= 0.2
-        ))
-        group.add(dwg.circle(
-            center=(2+i*3, 2), 
-            r= 0.5, 
-            fill= "#008000"
-        ))
-        group.add(dwg.text(
-            "AA", 
-            (2+i*3, 2),
-            font_size= 2,
-            font_family= "Arial",
-            style="text-anchor:middle;text-align:center",
-        ))
-
-    dwg.save()
+def getHue(index):
+    #return math.log(index*2+1, 2) % 1.0
+    return (0.6 - math.log(index*2+1, 2)) % 1.0
 
 
 def draw_grid(name):
 
-    import math
-
-    dwg = svgwrite.Drawing(filename=name, debug=True, viewBox=('-0.2 -0.2 4 4'))
+    N = 64
     
-    items = []
+    width = math.log(N, 2)
+    dwg = svgwrite.Drawing(filename=name, debug=True, viewBox=('-0.2 -0.2 %s %s' % (width+0.2, width+0.2)))
+    
+    limitItems = defaultdict(list)
+    limitCurrent = 0
+
+    def coord(i, j):
+        return math.log(i,2)+math.log(j,2), math.log(i,2)
+    
+    def getLineWidth(p, j):
+        k = 1.0/p
+        return k / j
+    
+    def getColor(index):
+        h = getHue(index)
+        col = colorsys.hsv_to_rgb( h, 0.7, 0.9 )
+        return "#%02x%02x%02x" % tuple( map( lambda f: int(f*0xFF), col ) )
+        
+    def line(c0,c1, w, stroke):
+        if c1[0] > width: c1 = (width, c1[1])
+        limitItems[limitCurrent].append(dwg.line(start=c0, end=c1, stroke='white', stroke_width= w*1.5))
+        limitItems[limitCurrent].append(dwg.line(start=c0, end=c1, stroke=stroke, stroke_width= w))
     
     def point(c,r, fill, i):
-        items.insert(0, dwg.circle(center=c, r= r, fill= fill))
-        r = r*1.8
-        c = (c[0], c[1]+r*0.35)
-        items.insert(1, dwg.text(`i`, c, font_size= r, font_family= "Arial", style="text-anchor:middle;text-align:center"))
-    
-    def line(c0,c1, w, stroke):
-        items.insert(0, dwg.line(start=c0, end=c1, stroke='white', stroke_width= w*1.1))
-        items.insert(1, dwg.line(start=c0, end=c1, stroke=stroke, stroke_width= w))
-    
+        limitItems[limitCurrent].append(dwg.circle(center=c, r= r, fill= fill))
+        s = r*1.8
+        c = (c[0], c[1]+s*0.35)
+        limitItems[limitCurrent].append(dwg.text(`i`, c, font_size= s, font_family= "Arial", style="text-anchor:middle;text-align:center"))
 
-    point((0, 0), 0.3/1, '#AAAAAA', 1)
+        
     
-    for p in (2, 3, 5, 7):
-        c = (math.log(p, 2), 0)
-        point(c, 0.3/p, '#AAAAAA', p)
+    ns = range(1, N+1)
+    ps = list(itertools.takewhile(lambda p: p <= N, primes()))
+
+    limitCurrent = 1
+    point(coord(1, 1), 0.5/1, getColor(0), 1)
+
+    #for pi,p in enumerate(ps):  # ji limit
+    for pi,p in enumerate([2,3,5,7]):  # ji limit
         
-        c0 = (math.log(p-1, 2), 0)
-        line(c0,c, 0.4/p, '#AAAAAA')
+        limitCurrent = p
+        fillColor = getColor(pi)
+
+        # verticals
+        for j in ns:
+            if j>1 and max(factor(j))==p:
+                c0 = coord(1, j)
+                c1 = coord(j, 1)
+                line(c0,c1, getLineWidth(p, j), fillColor)
+
+        # horizontals
+        for i in ns:
+            for j in ps:
+                if i==1 or max(factor(i*j))==p:
+                    if j<=p and i*(j-1)<=N:
+                        c0 = coord(i, j-1)
+                        c1 = coord(i, j)
+                        #point(c0, 0.3/((p-1)*i), fillColor, p-1)
+                        #point(c1, 0.3/(j*i), fillColor, p)
+                        line(c0,c1, getLineWidth(p, j*i), fillColor)
         
+        # points
+        for j in ns:
+            if j>1 and max(factor(j))==p:
+                for i in getAllDivisors(j):
+                    jj = j/i
+                    c0 = coord(i, jj)
+                    point(c0, 0.5/(jj*i), fillColor, jj)
+                    
         
-    group = dwg.add(dwg.g(id='g1'))
-    for i in items:
-        group.add(i)
+
+    for l in sorted(limitItems.keys())[::-1]:
+        group = dwg.add(dwg.g(id='limit'+`l`))
+        for i in limitItems[l]:
+            group.add(i)
     
     dwg.save()
     
@@ -113,6 +121,11 @@ def test():
     #draw_test(fileName)
     draw_grid(fileName)
     open(fileName)
+
+
+def test2():
+    print tuple(getAllDivisors(12))
+    
 
 
 if __name__ == "__main__":
