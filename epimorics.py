@@ -177,7 +177,7 @@ def generateAllPathCombinations(notes):             # 4,5,6
     pairs = tuple(itertools.combinations(notes, 2)) # (4,5), (4,6), (5,6)
     print 'pairs (%d):' % len(pairs), pairs
     paths = [list(getPaths(*p)) for p in pairs]   # paths of (4,5), paths of (4,6), paths of (5,6)
-    #for pp in paths: print 'paths', pp[0].n0, pp[0].n1, len(pp), [p.way for p in pp]
+    for pp in paths: print 'paths', pp[0].n0, pp[0].n1, len(pp), [p.way for p in pp]
     return itertools.product(*paths)        # all interpretations
 
 
@@ -286,9 +286,10 @@ def test3():
 
 def test4():
     notes = 108,135,162
-    notes = 108,135,162,196
-    notes =     135,162,160,196
-    notes =         162,160,196
+    notes =         162,160,192
+    notes =     135,162,160,192
+    notes = 108,    162,160,192
+    notes = 108,135,162,160,192
     if 0:
         chains = findBestChains(notes)
         for chain in chains:
@@ -302,21 +303,6 @@ def test4():
         for chord in chords:
             print formatChord(chord)
 
-
-"""
-findBestChords (162, 160, 196)
-pairs (3): ((162, 160), (162, 196), (160, 196))
-                                       .   .         .
-(1)  [64] [72] [96] [108] [128] [144] 160 162 [168] 196
-(24)                              6-------------7
-(28)                                            6----7
-(32)  2---------3           4----------5
-(36)       2----------3
-(48)            2-----------------3
-(54)                  2--------------------3
-(64)  1---------------------2
-(72)       1----------------------2
-"""
 
 
 if __name__ == "__main__":
