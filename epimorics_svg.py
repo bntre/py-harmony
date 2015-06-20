@@ -22,10 +22,13 @@ def getHue(index):
 
 def draw_grid(name):
 
-    N = 64
+    N = 100
     
     width = math.log(N, 2)
-    dwg = svgwrite.Drawing(filename=name, debug=True, viewBox=('-0.2 -0.2 %s %s' % (width+0.2, width+0.2)))
+    dwg = svgwrite.Drawing(
+        filename=name, 
+        debug=True
+    )
     
     limitItems = defaultdict(list)
     limitCurrent = 0
@@ -34,24 +37,35 @@ def draw_grid(name):
         return math.log(i,2)+math.log(j,2), math.log(i,2)
     
     def getLineWidth(p, j):
-        k = 1.0/p
+        k = 1.5/p
         return k / j
+    
+    def getPointRadius(j):
+        return 0.6/j
     
     def getColor(index):
         h = getHue(index)
         col = colorsys.hsv_to_rgb( h, 0.7, 0.9 )
         return "#%02x%02x%02x" % tuple( map( lambda f: int(f*0xFF), col ) )
         
+    scale = 100
+    def scalePoint(c): return (c[0]+0.5)*scale, (c[1]+0.5)*scale
+    
     def line(c0,c1, w, stroke):
         if c1[0] > width: c1 = (width, c1[1])
-        limitItems[limitCurrent].append(dwg.line(start=c0, end=c1, stroke='white', stroke_width= w*1.5))
-        limitItems[limitCurrent].append(dwg.line(start=c0, end=c1, stroke=stroke, stroke_width= w))
+        limitItems[limitCurrent].append(dwg.line(start=scalePoint(c0), end=scalePoint(c1), stroke='white', stroke_width= w*1.2*scale))
+        limitItems[limitCurrent].append(dwg.line(start=scalePoint(c0), end=scalePoint(c1), stroke=stroke, stroke_width= w*scale))
     
     def point(c,r, fill, i):
-        limitItems[limitCurrent].append(dwg.circle(center=c, r= r, fill= fill))
-        s = r*1.8
-        c = (c[0], c[1]+s*0.35)
-        limitItems[limitCurrent].append(dwg.text(`i`, c, font_size= s, font_family= "Arial", style="text-anchor:middle;text-align:center"))
+        limitItems[limitCurrent].append(dwg.circle(center=scalePoint(c), r= r*scale, fill= fill))
+        #
+        minsize = 0.035
+        s = r*1.8 + minsize
+        c = (c[0], c[1] + s*0.35)
+        #c = (c[0], c[1] + (i%3)*minsize)
+        if getPointRadius(i) <= minsize:
+            c = (c[0], c[1] + (i%3-1)*minsize)
+        limitItems[limitCurrent].append(dwg.text(`i`, scalePoint(c), font_size= s*scale, font_family= "Arial", style="text-anchor:middle;text-align:center"))
 
         
     
@@ -59,7 +73,7 @@ def draw_grid(name):
     ps = list(itertools.takewhile(lambda p: p <= N, primes()))
 
     limitCurrent = 1
-    point(coord(1, 1), 0.5/1, getColor(0), 1)
+    point(coord(1, 1), getPointRadius(1), getColor(0), 1)
 
     #for pi,p in enumerate(ps):  # ji limit
     for pi,p in enumerate([2,3,5,7]):  # ji limit
@@ -81,8 +95,6 @@ def draw_grid(name):
                     if j<=p and i*(j-1)<=N:
                         c0 = coord(i, j-1)
                         c1 = coord(i, j)
-                        #point(c0, 0.3/((p-1)*i), fillColor, p-1)
-                        #point(c1, 0.3/(j*i), fillColor, p)
                         line(c0,c1, getLineWidth(p, j*i), fillColor)
         
         # points
@@ -91,7 +103,7 @@ def draw_grid(name):
                 for i in getAllDivisors(j):
                     jj = j/i
                     c0 = coord(i, jj)
-                    point(c0, 0.5/(jj*i), fillColor, jj)
+                    point(c0, getPointRadius(jj*i), fillColor, jj)
                     
         
 

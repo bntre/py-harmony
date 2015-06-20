@@ -157,7 +157,8 @@ class Chord(object):
         return (
             len(self.scalas),
             len(self.getAllNotes()),
-            reduce(utils.lcm, self.scalas)
+            reduce(utils.lcm, self.scalas),
+            utils.mult(self.scalas),
         )
     def getBestChains(self):
         if len(self.scalas) == 1:
@@ -272,7 +273,19 @@ def test3():
             #print formatChain(chain)
             print
 
+def test4():
+    notes = 108,135,162
+    notes = 108,135,162,196
+    notes = 108,135,162,160,196
+    chains = findBestChains(notes)
+    for chain in chains:
+        for chord in chain:
+            #print chord
+            print formatChord(chord)
+        #print formatChain(chain)
+        print
+
 
 if __name__ == "__main__":
     Rational.__repr__ = Rational.__str__
-    test3()
+    test4()
