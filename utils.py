@@ -133,14 +133,14 @@ def permutations_groups(groups):
 def findBestItems(items, getRate):
     "small rate is better"
     maxRate = None
-    result = []
+    result = ()
     for i in items:
         rate = getRate(i)
         if maxRate is None or rate < maxRate:
-            result = [i]
+            result = (i,)
             maxRate = rate
         elif rate == maxRate:
-            result += [i]
+            result += (i,)
     return result
 
 # https://wiki.python.org/moin/PythonDecoratorLibrary#Memoize
