@@ -261,24 +261,21 @@ def findTrees(notes):
         getHoleSteps(notes), 
         tuple(Tree(n) for n in notes)
     )
-    print hole
-    print '-'*20
-    #
+    #print hole
+    #print '-'*20
     for t in distinctById(iterTrees(hole)):
-        print t.format()
-        print formatTree(t, notes)
-        print '-'*5
-    
+        yield t
 
 
 def formatTree(tree, notes):
     grid  = defaultdict(lambda: defaultdict(str))
-    lines = defaultdict(list)  # list of pairs
+    lines = defaultdict(list)  # scala -> list of pairs
+    nums  = defaultdict(list)  # note  -> list scalas
 
+    # fill grids
     for n in notes:
         grid[0][n] = '.'
         grid[1][n] = `n`
-    
     def fillGrid(t):
         for (s,child) in t.children.items():
             n0,n1 = getStepPair(s)
@@ -288,13 +285,15 @@ def formatTree(tree, notes):
             grid[scala][note1] = `n1`
             grid[scala][note0] = `n0`
             lines[scala].append(tuple(sorted([note0,note1])))
+            nums[note1].append(scala)
+            nums[note0].append(scala)
             fillGrid(child)
     fillGrid(tree)
     
     scalas  =       sorted(grid.keys())
     columns = [0] + sorted(set(j  for row in grid.values()  for j in row.keys()))
 
-    # headers
+    # add headers
     for s in scalas:
         if s != 0:
             grid[s][0] = "(%d)" % s
@@ -302,11 +301,14 @@ def formatTree(tree, notes):
         if c != 0 and not grid[1][c]:
             grid[1][c] = "[%s]" % c
     
+    # format
     widths = {}
     for c in columns:
         widths[c] = max(len(grid[s][c])+1 for s in scalas)
-
-    def cell(s,c):
+    for c in nums.keys():  # find min/max scalas in columns
+        if nums[c]:
+            nums[c] = min(nums[c]), max(nums[c])
+    def formatCell(s,c):
         n = grid[s][c]
         w = widths[c]
         t0,t1 = ' ',' ' # tabulators
@@ -314,18 +316,20 @@ def formatTree(tree, notes):
             if   l[0] == c: t1 = '-'
             elif l[1] == c: t0 = '-'
             elif l[0] < c < l[1]: t0,t1 = '-','-'
+        if not n and nums[c]:
+            if nums[c][0] < s < nums[c][1]:
+                n = '|'
         a0 = (w - len(n))/2
         a1 = (w - len(n)) - a0
         return t0*a0 + n + t1*a1
     
-    return "\n".join("".join(cell(s,c) for c in columns) for s in scalas)
+    return "\n".join("".join(formatCell(s,c) for c in columns) for s in scalas)
 
 
 def test():
     #print [formatCodePair(code) for code in getEpimoricWay(15, 8)]
     notes = 4,5,6
     notes = 10,12,15
-    notes = 8,12,15,18
     notes = 108,135,    160,192
     notes = 81,80
     notes = 64,81,96
@@ -340,8 +344,13 @@ def test():
     notes =  36, 45, 54,     64
     notes = 2,3,4,6
     notes = 108,135,162,    192
+    notes = 8,12,15,18
     notes = 108,135,162,160,192
-    findTrees(notes)
+    for t in findTrees(notes):
+        print t.format()
+        print formatTree(t, notes)
+        print '-'*5
+        
 
 if __name__ == "__main__":
     Rational.__repr__ = Rational.__str__
